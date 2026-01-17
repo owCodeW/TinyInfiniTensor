@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <cstdint>
 
+#include "../operators/transpose.h"
+#include "../operators/matmul.h"
 namespace infini
 {
 
