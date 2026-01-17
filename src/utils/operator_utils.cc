@@ -9,8 +9,42 @@ Shape infer_broadcast(const Shape &A, const Shape &B) {
     // TODO：对 A 和 B 进行双向广播，返回广播后的形状。
     // REF: https://github.com/onnx/onnx/blob/main/docs/Broadcasting.md
     // =================================== 作业 ===================================
-    
-    return {};
+    // 获取A和B的维度数
+
+    int64_t dimsA = static_cast<int64_t>(A.size());
+    int64_t dimsB = static_cast<int64_t>(B.size());
+    // 计算广播后的维度数（取两者中的最大值）
+    int64_t maxDims = std::max(dimsA, dimsB);
+    // 创建结果形状
+    Shape result(maxDims);
+    // 从最右侧维度开始比较
+    for (int64_t i = 0; i < maxDims; i++) {
+        // 计算A和B在当前维度上的索引（从右侧开始）
+        int64_t idxA = dimsA - 1 - i;
+        int64_t idxB = dimsB - 1 - i;
+        // 获取A和B在当前维度上的大小（如果维度不存在则为1）
+        int64_t dimA = (idxA >= 0) ? A[idxA] : 1;
+        int64_t dimB = (idxB >= 0) ? B[idxB] : 1;
+        // 计算结果维度
+        if (dimA == dimB) {
+            // 情况1：维度大小相等
+            result[maxDims - 1 - i] = dimA;
+        } else if (dimA == 1) {
+            // 情况2：A的维度为1，使用B的维度
+            result[maxDims - 1 - i] = dimB;
+        } else if (dimB == 1) {
+            // 情况3：B的维度为1，使用A的维度
+            result[maxDims - 1 - i] = dimA;
+        } else {
+            // 情况4：维度大小不相等且都不为1，无法广播
+            throw std::invalid_argument(
+                "Incompatible shapes for broadcasting: dimension " + 
+                std::to_string(i) + " is " + std::to_string(dimA) + 
+                " and " + std::to_string(dimB) + ", but both are > 1"
+            );
+        }
+    }
+    return result;    
 }
 
 int get_real_axis(const int &axis, const int &rank) {
